@@ -12,8 +12,12 @@ import {Separator} from "@/components/ui/separator";
 import Link from "next/link";
 import React from "react";
 import {SignupForm} from "@/components/client/form";
+import {auth} from "@/auth";
+import {redirect} from "next/navigation";
 
-export default function Page() {
+export default async function Page() {
+  const session = await auth();
+  if (session?.user) redirect("/");
   return (
     <div className="flex justify-center items-center h-dvh">
       <Card className="w-10/12 md:w-2/4 xl:w-1/4">

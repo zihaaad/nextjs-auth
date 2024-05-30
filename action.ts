@@ -4,7 +4,6 @@ import {signIn} from "./auth";
 import {connectToDatabase} from "./lib/utils";
 import bcryptjs from "bcryptjs";
 import {User} from "./models/user.model";
-import {redirect} from "next/navigation";
 
 export const credentialsLogin = async (email: string, password: string) => {
   try {
@@ -23,7 +22,10 @@ export const signUp = async (name: string, email: string, password: string) => {
     await connectToDatabase();
     const user = await User.findOne({email});
 
-    if (user) return "User already exists";
+    if (user) {
+      const err = "User Already Exists";
+      return {err};
+    }
 
     const salt = await bcryptjs.genSalt(10);
     const hashedPassword = await bcryptjs.hash(password, salt);
@@ -33,8 +35,10 @@ export const signUp = async (name: string, email: string, password: string) => {
       email,
       password: hashedPassword,
     });
-    return "Account Created Successfully";
+
+    return {message: "Account Created Successfully"};
   } catch (error) {
-    return "Failed To Create Account";
+    const err = error;
+    return {err};
   }
 };

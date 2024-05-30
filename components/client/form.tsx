@@ -3,7 +3,7 @@ import {credentialsLogin, signUp} from "@/action";
 import {Button} from "../ui/button";
 import {Input} from "../ui/input";
 import {toast} from "sonner";
-import {useRouter} from "next/navigation";
+import {redirect, useRouter} from "next/navigation";
 
 export const LoginForm = () => {
   const router = useRouter();
@@ -16,7 +16,7 @@ export const LoginForm = () => {
         const toastId = toast.loading("Logging In");
 
         if (!email || !password)
-          return toast.error("Please provide all fields", {id: toastId});
+          return toast.info("Please Provide All Fields", {id: toastId});
 
         const err = await credentialsLogin(email, password);
 
@@ -46,12 +46,17 @@ export const SignupForm = () => {
         if (!email || !password || !name)
           return toast.info("Please Provide All Fields");
 
+        if (password.length < 8) {
+          return toast.info("Password Must Be 8 Character Long");
+        }
+
         const res = await signUp(name, email, password);
 
-        if (res) {
-          return toast.success(res);
+        if (res.message) {
+          toast.success(res.message);
+          redirect("/");
         } else {
-          return toast.success("Failed To Create Account");
+          toast.error(String(res.err));
         }
       }}
       className="flex flex-col gap-4">
