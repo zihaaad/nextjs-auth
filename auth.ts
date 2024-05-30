@@ -1,6 +1,9 @@
 import NextAuth, {CredentialsSignin} from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialProvider from "next-auth/providers/credentials";
+import bcryptjs from "bcryptjs";
+import {User} from "./models/user.model";
+import {connectToDatabase} from "./lib/utils";
 
 export const {handlers, signIn, signOut, auth} = NextAuth({
   providers: [
@@ -17,18 +20,32 @@ export const {handlers, signIn, signOut, auth} = NextAuth({
         },
         password: {label: "Password", type: "pasword"},
       },
-      authorize: ({email, password}) => {
-        console.log({email, password});
+      authorize: async (credentials) => {
+        const email = credentials.email as string | undefined;
+        const password = credentials.password as string | undefined;
 
-        if (typeof email !== "string")
-          throw new CredentialsSignin({cause: "Email is not valid"});
+        if (!email || !password)
+          throw new CredentialsSignin({
+            cause: "Please Provider both email and password",
+          });
 
-        const user = {email, id: "alfhy32w4y"};
-        if (password !== "passcode") {
-          throw new CredentialsSignin({cause: "Password does not match"});
-        } else return user;
+        await connectToDatabase();
+        const user = await User.findOne({email}).select("+password");
+
+        if (!user)
+          throw new CredentialsSignin({cause: "Invalid Email or Password"});
+
+        const isMatchPass = await bcryptjs.compare(password, user.password);
+
+        if (!isMatchPass)
+          throw new CredentialsSignin({cause: "Password Does not Match"});
+
+        return {name: user.name, email: user.email, id: user._id};
       },
     }),
   ],
+  pages: {
+    signIn: "/login",
+  },
   secret: process.env.AUTH_SECRET,
 });
