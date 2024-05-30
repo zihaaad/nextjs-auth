@@ -7,13 +7,20 @@ import {User} from "./models/user.model";
 
 export const credentialsLogin = async (email: string, password: string) => {
   try {
+    const user = await User.findOne({email});
+    const isGoogleUser = user.googleId;
+    if (isGoogleUser)
+      return {
+        err: "Already Have Account with Google",
+      };
+
     await signIn("credentials", {
       email,
       password,
     });
   } catch (error) {
     const err = error as CredentialsSignin;
-    return err.cause;
+    return {err: err.cause};
   }
 };
 

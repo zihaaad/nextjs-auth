@@ -1,4 +1,4 @@
-import NextAuth, {CredentialsSignin} from "next-auth";
+import NextAuth, {AuthError, CredentialsSignin} from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialProvider from "next-auth/providers/credentials";
 import bcryptjs from "bcryptjs";
@@ -44,8 +44,32 @@ export const {handlers, signIn, signOut, auth} = NextAuth({
       },
     }),
   ],
+  secret: process.env.AUTH_SECRET,
   pages: {
     signIn: "/login",
   },
-  secret: process.env.AUTH_SECRET,
+  callbacks: {
+    signIn: async ({user, account}) => {
+      if (account?.provider === "google") {
+        try {
+          const {email, name, image, id} = user;
+
+          await connectToDatabase();
+
+          const alreadyUser = await User.findOne({email});
+
+          if (!alreadyUser)
+            await User.create({email, name, image, googleId: id});
+
+          return true;
+        } catch (error) {
+          throw new AuthError("Error white creating user");
+        }
+      }
+      if (account?.provider === "credentials") {
+        return true;
+      }
+      return false;
+    },
+  },
 });

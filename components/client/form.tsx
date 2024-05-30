@@ -18,13 +18,13 @@ export const LoginForm = () => {
         if (!email || !password)
           return toast.info("Please Provide All Fields", {id: toastId});
 
-        const err = await credentialsLogin(email, password);
+        const res = await credentialsLogin(email, password);
 
-        if (!err) {
+        if (res?.err) {
+          toast.error(String(res.err), {id: toastId});
+        } else {
           toast.success("Logged In Successfully", {id: toastId});
           router.refresh();
-        } else {
-          toast.error(String(err), {id: toastId});
         }
       }}
       className="flex flex-col gap-4">
@@ -43,20 +43,22 @@ export const SignupForm = () => {
         const email = formData.get("email") as string;
         const password = formData.get("password") as string;
 
+        const toastId = toast.loading("Creating Account");
+
         if (!email || !password || !name)
-          return toast.info("Please Provide All Fields");
+          return toast.info("Please Provide All Fields", {id: toastId});
 
         if (password.length < 8) {
-          return toast.info("Password Must Be 8 Character Long");
+          return toast.info("Password Must Be 8 Character Long", {id: toastId});
         }
 
         const res = await signUp(name, email, password);
 
         if (res.message) {
-          toast.success(res.message);
+          toast.success(res.message, {id: toastId});
           redirect("/");
         } else {
-          toast.error(String(res.err));
+          toast.error(String(res.err), {id: toastId});
         }
       }}
       className="flex flex-col gap-4">
